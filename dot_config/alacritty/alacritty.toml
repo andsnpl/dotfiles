@@ -1,0 +1,29 @@
+[colors.primary]
+background = "#121212"
+
+[font.bold]
+family = "MesloLGS NF"
+style = "Bold"
+
+[font.bold_italic]
+family = "MesloLGS NF"
+style = "Bold Italic"
+
+[font.italic]
+family = "MesloLGS NF"
+style = "Italic"
+
+[font.normal]
+family = "MesloLGS NF"
+style = "Regular"
+
+[font.offset]
+y = 2
+
+[window]
+decorations = "none"
+opacity = 0.85
+
+[window.padding]
+x = 16
+y = 16
