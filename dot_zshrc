@@ -94,6 +94,7 @@ function nvim() {
 alias vim="nvim"
 
 alias chz="chezmoi"
+alias chzp="echo 'git push' | chezmoi cd"
 
 unalias ga # remove oh-my-zsh alias
 function ga() {
