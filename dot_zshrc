@@ -41,6 +41,7 @@ source $ZSH/oh-my-zsh.sh
 export PATH="/usr/local/share/dotnet:$PATH"
 export PATH="$HOME/.dotnet/tools:$PATH"
 export PATH="$HOME/.zig/0.12.0:$PATH"
+export PATH="$HOME/.cargo/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.tmux/plugins/tmux-session-wizard/bin:$PATH"
 
