@@ -2,8 +2,8 @@ local keymap = vim.keymap
 
 vim.g.mapleader = " "
 
-keymap.set("n", "]<space>", "o<C-u><esc>k", { desc = "Add new line below" })
-keymap.set("n", "[<space>", "O<C-u><esc>j", { desc = "Add new line above" })
+keymap.set("n", "]<space>", "o<esc>0Dk", { desc = "Add new line below" })
+keymap.set("n", "[<space>", "O<esc>0Dj", { desc = "Add new line above" })
 keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically" })
 keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally" })
 keymap.set("n", "<leader>se", "<C-w>=", { desc = "Make splits equal size" })

@@ -7,6 +7,7 @@ return {
 			{ "<leader>c", group = "Config|Code actions" },
 			{ "<leader>e", group = "Exec" },
 			{ "<leader>f", group = "Fuzzy finder" },
+			{ "<leader>h", group = "Git hunks" },
 			{ "<leader>l", group = "Lazygit" },
 			{ "<leader>m", group = "Make" },
 			{ "<leader>p", group = "Print" },
