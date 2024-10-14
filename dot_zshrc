@@ -93,7 +93,7 @@ function nvim() {
 }
 alias vim="nvim"
 
-alias czm="chezmoi"
+alias chz="chezmoi"
 
 unalias ga # remove oh-my-zsh alias
 function ga() {
