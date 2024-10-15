@@ -21,7 +21,7 @@ style = "Regular"
 y = 2
 
 [window]
-decorations = "none"
+decorations = "buttonless"
 opacity = 0.85
 
 [window.padding]
