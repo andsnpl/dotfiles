@@ -1,0 +1,82 @@
+#!/bin/bash
+
+: "${SCRATCHSPACE:=X}"
+: "${BANISH:=false}"
+
+badapp() {
+  echo "Unrecognized app - $1"
+  exit 1
+}
+
+listwindows() {
+  local app="$1"; shift
+  if [[ "$app" = "chrome" ]]; then
+    # Grep is to find only windows with the dafault profile
+    aerospace list-windows --monitor focused --app-bundle-id "com.google.Chrome" "$@" | grep -e '- Paul$' | cut -d' ' -f1
+    return
+  fi
+
+  badapp "$app"
+}
+
+startapp() {
+  local app="$1"; shift
+  if [[ "$app" = "chrome" ]]; then
+    open -a "Google Chrome" --new --args --profile-directory="Default"
+    return
+  fi
+
+  badapp "$app"
+}
+
+app="$1"
+if [[ -z "$app" ]]; then
+  echo "Must specify an app to summon"
+  exit 1
+fi
+
+ws=$(aerospace list-workspaces --focused | head -1 | cut -d' ' -f1)
+
+#
+# Banish windows for a clean slate
+#
+
+tomove=()
+while IFS= read -r winid; do
+  tomove+=( "$winid" )
+done < <(listwindows "$app" --workspace "$ws")
+
+for winid in "${tomove[@]}"; do
+  aerospace move-node-to-workspace --window-id "$winid" "$SCRATCHSPACE"
+done
+
+if [[ $BANISH = true ]]; then
+  exit
+fi
+
+#
+# Summon windows back (or open a new window)
+#
+
+tomove=()
+while IFS= read -r winid; do
+  tomove+=( "$winid" )
+done < <(listwindows "$app")
+
+nmoved=0
+for winid in "${tomove[@]}"; do
+  echo "will move $winid"
+  aerospace move-node-to-workspace --window-id "$winid" "$ws"
+  echo "moved $winid"
+  ((++nmoved))
+  if [[ $nmoved -eq 2 ]]; then
+    aerospace join-with --window-id "$winid" left
+  elif [[ $nmoved -gt 2 ]]; then
+    aerospace move --window-id "$winid" left
+    aerospace layout --window-id "$winid" accordion
+  fi
+done
+
+if [[ $nmoved -eq 0 ]]; then
+  startapp "$app"
+fi
