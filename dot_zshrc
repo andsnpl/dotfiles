@@ -81,16 +81,13 @@ function nvim() {
   export NVIM_SESSION_FILE="/tmp/nvim_restart.session"
   command nvim $@
   res=$?
-  while true; do
+  while [[ $res -eq 222 ]]; do
     echo "Nvim exited with code $res"
-    if [[ $res -eq 222 ]] then
-      echo "Restarting nvim"
-      command nvim -S "$NVIM_SESSION_FILE"
-      res=$?
-      continue
-    fi
-    break
+    echo "Restarting nvim"
+    command nvim -S "$NVIM_SESSION_FILE"
+    res=$?
   done
+  echo "Nvim exited with code $res"
 }
 alias vim="nvim"
 
