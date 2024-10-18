@@ -49,10 +49,10 @@ export PATH="$HOME/.tmux/plugins/tmux-session-wizard/bin:$PATH"
 
 # Enable p10k prompt
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[ -f ~/.p10k.zsh ] && source ~/.p10k.zsh
+[ -f "$HOME/.p10k.zsh" ] && source "$HOME/.p10k.zsh"
 
 # load fzf config for zsh
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+[ -f "$HOME/.fzf.zsh" ] && source "$HOME/.fzf.zsh"
 
 # Enable mise
 eval "$(command mise activate zsh)"
@@ -81,7 +81,7 @@ function nvim() {
   # The restart command in my vim config will write to this session
   # file and then quit with code 222
   export NVIM_SESSION_FILE="/tmp/nvim_restart.session"
-  command nvim $@
+  command nvim "$@"
   res=$?
   while [[ $res -eq 222 ]]; do
     echo "Nvim exited with code $res"
