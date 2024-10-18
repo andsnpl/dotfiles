@@ -39,10 +39,12 @@ source $ZSH/oh-my-zsh.sh
 # User configuration
 
 export PATH="/usr/local/share/dotnet:$PATH"
+export PATH="$HOME/bin:$PATH"
 export PATH="$HOME/.dotnet/tools:$PATH"
 export PATH="$HOME/.zig/0.12.0:$PATH"
 export PATH="$HOME/.cargo/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.toolbox/bin:$PATH"
 export PATH="$HOME/.tmux/plugins/tmux-session-wizard/bin:$PATH"
 
 # Enable p10k prompt
@@ -95,6 +97,11 @@ alias chz="chezmoi"
 alias chzit="chezmoi re-add"
 alias chzp="echo 'git push' | chezmoi cd"
 alias chzme="{ echo 'git pull --ff-only' | chezmoi cd } && chezmoi apply"
+
+alias bb="brazil-build"
+alias bws="brazil workspace"
+alias brc="brazil-recursive-cmd"
+alias brb="brazil-recursive-cmd brazil-build"
 
 unalias ga # remove oh-my-zsh alias
 function ga() {
