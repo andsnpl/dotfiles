@@ -1,0 +1,72 @@
+#!/bin/bash
+
+target="${1:-"build"}"
+: "${MAKEME_DIR:="$PWD"}"
+
+toerr() {
+  echo "$*" >&2
+}
+
+brazil() {
+  if [[ ! -f "$MAKEME_DIR/Config" ]]; then
+    toerr "No Config file found, skipping brazil commands"
+    return
+  fi
+  case "$target" in
+    build) echo "brazil-build"
+      ;;
+    test) echo "brazil-build test"
+      ;;
+  esac
+}
+
+make() {
+  if [[ ! -f "$MAKEME_DIR/Makefile" ]]; then
+    toerr "No Makefile found, skipping make commands"
+    return
+  fi
+  case "$target" in
+    build) echo "make"
+      ;;
+    test) echo "make test"
+      ;;
+  esac
+}
+
+npm_() {
+  case "$target" in
+    dev) echo "$NPM run dev"
+      ;;
+    build) echo "$NPM run build"
+      ;;
+    test) echo "$NPM run test"
+      ;;
+    watch) echo "$NPM run watch"
+      ;;
+  esac
+}
+
+npm() {
+  if [[ ! -f "$MAKEME_DIR/package-lock.json" ]]; then
+    echo "No package-lock.json found, skipping npm commands"
+    return
+  fi
+  NPM="npm" npm_
+}
+
+pnpm() {
+  if [[ ! -f "$MAKEME_DIR/pnpm-lock.yaml" ]]; then
+    echo "No pnpm-lock.yaml found, skipping pnpm commands"
+    return
+  fi
+  NPM="pnpm" npm_
+}
+
+for cmd in "brazil" "make" "pnpm" "npm"; do
+  if output="$($cmd)"; [ -n "$output" ]; then
+    toerr "$cmd $target command:"
+    echo "$output"
+    break
+  fi
+done
+
