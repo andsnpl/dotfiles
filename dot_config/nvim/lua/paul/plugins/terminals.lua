@@ -26,7 +26,7 @@ return {
 
 			keymap.set("n", "<leader>mr", function()
 				local cmd = "eval $(~/bin/makeme run)"
-				toggleterm.exec(cmd, 1)
+				toggleterm.exec(cmd, 2)
 			end, { desc = "Make run" })
 
 			keymap.set("n", "<leader>mw", function()
