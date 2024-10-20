@@ -202,7 +202,7 @@ alt-shift-k = ['join-with up', 'mode main']
 alt-shift-l = ['join-with right', 'mode main']
 
 [[on-window-detected]]
-if.app-id = 'com.amazon.chime'
+if.app-id = 'com.amazon.Amazon-Chime'
 run = 'move-node-to-workspace M'
 
 [[on-window-detected]]
