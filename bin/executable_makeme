@@ -33,15 +33,15 @@ make() {
   esac
 }
 
-npm_() {
+npmlike() {
   case "$target" in
-    dev) echo "$NPM run dev"
+    run) echo "$NPMLIKE run dev"
       ;;
-    build) echo "$NPM run build"
+    build) echo "$NPMLIKE run build"
       ;;
-    test) echo "$NPM run test"
+    test) echo "$NPMLIKE run test"
       ;;
-    watch) echo "$NPM run watch"
+    watch) echo "$NPMLIKE run watch"
       ;;
   esac
 }
@@ -51,7 +51,7 @@ npm() {
     echo "No package-lock.json found, skipping npm commands"
     return
   fi
-  NPM="npm" npm_
+  NPMLIKE="npm" npmlike
 }
 
 pnpm() {
@@ -59,7 +59,7 @@ pnpm() {
     echo "No pnpm-lock.yaml found, skipping pnpm commands"
     return
   fi
-  NPM="pnpm" npm_
+  NPMLIKE="pnpm" npmlike
 }
 
 for cmd in "brazil" "make" "pnpm" "npm"; do
