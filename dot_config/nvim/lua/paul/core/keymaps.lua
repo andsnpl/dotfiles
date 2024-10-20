@@ -6,7 +6,7 @@ keymap.set({ "x" }, "p", "P") -- Default paste should not yank the deleted text
 keymap.set("n", "]<space>", "o<esc>0Dk", { desc = "Add new line below" })
 keymap.set("n", "[<space>", "O<esc>0Dj", { desc = "Add new line above" })
 keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically" })
-keymap.set("n", "<leader>sv", "<C-w>s", { desc = "Split window horizontally" })
+keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally" })
 keymap.set("n", "<leader>se", "<C-w>=", { desc = "Make splits equal size" })
 keymap.set("n", "<leader>sc", "<cmd>close<CR>", { desc = "Close current split" })
 keymap.set(
