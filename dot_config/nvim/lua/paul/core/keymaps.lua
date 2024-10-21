@@ -2,7 +2,6 @@ local keymap = vim.keymap
 
 vim.g.mapleader = " "
 
-keymap.set({ "x" }, "p", "P") -- Default paste should not yank the deleted text
 keymap.set("n", "]<space>", "o<esc>0Dk", { desc = "Add new line below" })
 keymap.set("n", "[<space>", "O<esc>0Dj", { desc = "Add new line above" })
 keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically" })

@@ -20,22 +20,17 @@ return {
 			end, { desc = "Toggle default terminal" })
 
 			keymap.set("n", "<leader>b", function()
-				local cmd = "eval $(~/bin/makeme build)"
+				local cmd = "num run build" -- TODO smart function to get the build command for the workspace
 				toggleterm.exec(cmd, 1)
 			end, { desc = "Build project" })
 
-			keymap.set("n", "<leader>mr", function()
-				local cmd = "eval $(~/bin/makeme run)"
-				toggleterm.exec(cmd, 2)
-			end, { desc = "Make run" })
-
 			keymap.set("n", "<leader>mw", function()
-				local cmd = "eval $(~/bin/makeme watch)"
+				local cmd = "npm run watch" -- TODO smart function to get the watch command for the workspace
 				toggleterm.exec(cmd, 2)
 			end, { desc = "Make watch" })
 
 			keymap.set("n", "<leader>mt", function()
-				local cmd = "eval $(~/bin/makeme test)"
+				local cmd = "npm run test" -- TODO smart function to get the test command for the workspace
 				toggleterm.exec(cmd, 3)
 			end, { desc = "Make test" })
 

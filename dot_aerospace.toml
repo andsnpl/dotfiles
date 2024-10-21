@@ -202,6 +202,13 @@ alt-shift-k = ['join-with up', 'mode main']
 alt-shift-l = ['join-with right', 'mode main']
 
 [[on-window-detected]]
+# Prevents the next rule moving the meeting controls to the M workspace
+if.app-id = 'com.amazon.Amazon-Chime'
+if.window-title-regex-substring = '^Amazon Chime: Meeting Controls$'
+run = []
+check-further-callbacks = false
+
+[[on-window-detected]]
 if.app-id = 'com.amazon.Amazon-Chime'
 run = 'move-node-to-workspace M'
 
