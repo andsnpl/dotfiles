@@ -236,3 +236,7 @@ run = 'move-node-to-workspace T'
 if.window-title-regex-substring = "Google Chrome - Paul's Music$"
 run = 'move-node-to-workspace U'
 
+[[on-window-detected]]
+if.app-id = 'com.cisco.anyconnect.gui'
+run = 'layout floating'
+
