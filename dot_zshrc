@@ -112,6 +112,10 @@ function gre() {
   git reset -q "$@" && git status
 }
 
+if [[ -f "$HOME/bin/ssh-ident" ]]; then
+  alias ssh="ssh-ident"
+fi
+
 alias ls="lsd"
 alias la="lsd -a"
 alias ll="lsd -l"

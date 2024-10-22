@@ -1,4 +1,4 @@
-local treesitter_parsers = require("paul.lang").treesitter_languages
+local treesitter_parsers = require("paul.lang").treesitter_parsers
 
 return {
 	"nvim-treesitter/nvim-treesitter",

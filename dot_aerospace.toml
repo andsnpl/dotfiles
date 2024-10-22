@@ -44,6 +44,14 @@ key-mapping.preset = 'dvorak'
 # See https://nikitabobko.github.io/AeroSpace/commands#move-mouse
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 
+# Get the Chime Meeting Controls window to follow the workspace
+# Disabled because for some reason this makes it harder to switch back to Chime when you want to
+
+# exec-on-workspace-change = [
+#   '/bin/bash', '--login', '-c',
+#   'WIN=$(aerospace list-windows --all | grep "Amazon Chime: Meeting Controls" | cut -d" " -f1); [ -n "$WIN" ] && aerospace move-node-to-workspace --window-id "$WIN" "$AEROSPACE_FOCUSED_WORKSPACE"'
+# ]
+
 # Gaps between windows (inner-*) and between monitor edges (outer-*).
 # Possible values:
 # - Constant:     gaps.outer.top = 8
@@ -200,13 +208,6 @@ alt-shift-h = ['join-with left', 'mode main']
 alt-shift-j = ['join-with down', 'mode main']
 alt-shift-k = ['join-with up', 'mode main']
 alt-shift-l = ['join-with right', 'mode main']
-
-[[on-window-detected]]
-# Prevents the next rule moving the meeting controls to the M workspace
-if.app-id = 'com.amazon.Amazon-Chime'
-if.window-title-regex-substring = '^Amazon Chime: Meeting Controls$'
-run = []
-check-further-callbacks = false
 
 [[on-window-detected]]
 if.app-id = 'com.amazon.Amazon-Chime'
