@@ -9,4 +9,5 @@ return {
 			{ "<leader>sm", "<cmd>MaximizerToggle<CR>", desc = "Maximize/minimize a split" },
 		},
 	},
+	{ "Darazaki/indent-o-matic", event = { "BufReadPost" }, config = true },
 }
