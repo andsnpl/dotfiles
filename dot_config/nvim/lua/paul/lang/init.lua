@@ -27,7 +27,7 @@ local union_all = function(tbl)
 	return final
 end
 
-for _, lang in ipairs({ "bash", "c", "lua", "markdown", "misc_lang", "python", "web" }) do
+for _, lang in ipairs({ "bash", "c", "fsharp", "lua", "markdown", "misc_lang", "ocaml", "python", "web" }) do
 	local mod = require("paul.lang." .. lang)
 	validate_module(lang, mod)
 	treesitter_parsers = vim.list_extend(treesitter_parsers, mod.treesitter_parsers or {})
