@@ -7,12 +7,18 @@ toerr() {
   echo "$*" >&2
 }
 
+globexists() {
+  find $1 -quit &>/dev/null
+}
+
 brazil() {
   if [[ ! -f "$MAKEME_DIR/Config" ]]; then
     toerr "No Config file found, skipping brazil commands"
     return
   fi
   case "$target" in
+    install) echo "brazil-build install"
+      ;;
     build) echo "brazil-build"
       ;;
     test) echo "brazil-build test"
@@ -35,20 +41,22 @@ make() {
 
 npmlike() {
   case "$target" in
-    run) echo "$NPMLIKE run dev"
+    install) echo "$NPMLINKE install"
       ;;
     build) echo "$NPMLIKE run build"
       ;;
+    exec) echo "$NPMLIKE run dev"
+      ;;
     test) echo "$NPMLIKE run test"
       ;;
-    watch) echo "$NPMLIKE run watch"
+    watchtest) echo "$NPMLIKE run test -- --watch"
       ;;
   esac
 }
 
 npm() {
   if [[ ! -f "$MAKEME_DIR/package-lock.json" ]]; then
-    echo "No package-lock.json found, skipping npm commands"
+    toerr "No package-lock.json found, skipping npm commands"
     return
   fi
   NPMLIKE="npm" npmlike
@@ -56,13 +64,34 @@ npm() {
 
 pnpm() {
   if [[ ! -f "$MAKEME_DIR/pnpm-lock.yaml" ]]; then
-    echo "No pnpm-lock.yaml found, skipping pnpm commands"
+    toerr "No pnpm-lock.yaml found, skipping pnpm commands"
     return
   fi
   NPMLIKE="pnpm" npmlike
 }
 
-for cmd in "brazil" "make" "pnpm" "npm"; do
+dotnet() {
+  if ! globexists "$MAKEME_DIR/*.csproj" && ! globexists "$MAKEME_DIR/*.fsproj"; then
+    toerr "No .csproj or .fsproj found, skipping dotnet commands"
+    return
+  fi
+  case "$target" in
+    install) echo "dotnet restore"
+      ;;
+    build) echo "dotnet build"
+      ;;
+    exec) echo "dotnet run"
+      ;;
+    watchexec) echo "dotnet watch run"
+      ;;
+    test) echo "dotnet test"
+      ;;
+    watchtest) echo "dotnet watch test"
+      ;;
+  esac
+}
+
+for cmd in "brazil" "make" "pnpm" "npm" "dotnet"; do
   if output="$($cmd)"; [ -n "$output" ]; then
     toerr "$cmd $target command:"
     echo "$output"

@@ -34,12 +34,29 @@ return {
 			mapping = cmp.mapping.preset.insert({
 				["<C-p>"] = cmp.mapping.select_prev_item(),
 				["<C-n>"] = cmp.mapping.select_next_item(),
-				["<Tab>"] = cmp.mapping.select_next_item(),
+				["<Tab>"] = cmp.mapping(function(fallback)
+					if cmp.visible() then
+						cmp.select_next_item()
+					elseif luasnip.locally_jumpable(1) then
+						luasnip.jump(1)
+					else
+						fallback()
+					end
+				end),
+				["<S-Tab>"] = cmp.mapping(function(fallback)
+					if cmp.visible() then
+						cmp.select_prev_item()
+					elseif luasnip.locally_jumpable(-1) then
+						luasnip.jump(-1)
+					else
+						fallback()
+					end
+				end),
 				["<C-d>"] = cmp.mapping.scroll_docs(-4),
 				["<C-u>"] = cmp.mapping.scroll_docs(4),
 				["<C-Space>"] = cmp.mapping.complete(),
 				["<C-c>"] = cmp.mapping.abort(),
-				["<C-E>"] = cmp.config.disable, -- Previously mapped to abort(). Will be used to expand snippets
+				["<C-E>"] = cmp.config.disable, -- Previously mapped to abort(). Will be used below to expand snippets
 				["<CR>"] = cmp.mapping.confirm({ select = false }),
 			}),
 			sources = cmp.config.sources({
@@ -58,8 +75,6 @@ return {
 			},
 		})
 
-		local keymap = vim.keymap
-
 		---
 		--- Luasnip keymaps
 		---
@@ -70,23 +85,15 @@ return {
 			end
 		end
 
-		keymap.set({ "i" }, "<C-e>", function()
+		vim.keymap.set({ "i" }, "<C-e>", function()
 			luasnip.expand()
 		end, { silent = true, desc = "Expand snippet" })
 
-		keymap.set({ "i", "s" }, "<Tab>", function()
-			luasnip.jump(1)
-		end, { silent = true, desc = "Jump to next slot" })
-
-		keymap.set({ "i", "s" }, "<S-Tab>", function()
-			luasnip.jump(-1)
-		end, { silent = true, desc = "Jump to prev slot" })
-
-		keymap.set({ "i", "s" }, "<C-n>", function()
+		vim.keymap.set({ "i", "s" }, "<C-n>", function()
 			cycle_choices(1)
 		end, { silent = true, desc = "Cycle snippet choices" })
 
-		keymap.set({ "i", "s" }, "<C-p>", function()
+		vim.keymap.set({ "i", "s" }, "<C-p>", function()
 			cycle_choices(-1)
 		end, { silent = true, desc = "Cycle snippet choices backwards" })
 	end,

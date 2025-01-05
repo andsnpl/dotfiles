@@ -19,44 +19,44 @@ return {
 				end
 			end, { desc = "Toggle default terminal" })
 
-			keymap.set("n", "<leader><cr>", function()
-				local f = vim.api.nvim_buf_get_name(0)
-				local cmd = "makeme exec " .. f
-				toggleterm.exec(cmd, 1)
-			end)
+			-- keymap.set("n", "<leader><cr>", function()
+			-- 	local f = vim.api.nvim_buf_get_name(0)
+			-- 	local cmd = "eval `makeme exec " .. f .. "`"
+			-- 	toggleterm.exec(cmd, 1)
+			-- end, { desc = "Execute current file" })
 
 			keymap.set("n", "<leader>mi", function()
-				local cmd = "makeme install"
+				local cmd = "eval `makeme install`"
 				toggleterm.exec(cmd, 1)
 			end, { desc = "Install dependencies" })
 
 			keymap.set("n", "<leader>mb", function()
-				local cmd = "makeme build"
+				local cmd = "eval `makeme build`"
 				toggleterm.exec(cmd, 1)
 			end, { desc = "Build project" })
 
 			keymap.set("n", "<leader>mx", function()
-				local cmd = "makeme exec"
+				local cmd = "eval `makeme exec`"
 				toggleterm.exec(cmd, 1)
 			end, { desc = "Execute program entrypoint" })
 
 			keymap.set("n", "<leader>ms", function()
-				local cmd = "makeme server"
+				local cmd = "eval `makeme server`"
 				toggleterm.exec(cmd, 2)
 			end, { desc = "Start server" })
 
 			keymap.set("n", "<leader>mwx", function()
-				local cmd = "makeme watchexec"
+				local cmd = "eval `makeme watchexec`"
 				toggleterm.exec(cmd, 2)
 			end, { desc = "Watch exec" })
 
 			keymap.set("n", "<leader>mt", function()
-				local cmd = "makeme test"
+				local cmd = "eval `makeme test`"
 				toggleterm.exec(cmd, 3)
 			end, { desc = "Run test suite" })
 
 			keymap.set("n", "<leader>mwt", function()
-				local cmd = "makeme watchtest"
+				local cmd = "eval `makeme watchtest`"
 				toggleterm.exec(cmd, 3)
 			end, { desc = "Watch test" })
 
