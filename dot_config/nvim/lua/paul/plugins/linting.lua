@@ -1,4 +1,5 @@
 local linters_by_ft = require("paul.lang").linters_by_ft
+local linters_setup = require("paul.lang").linters_setup
 
 return {
 	"mfussenegger/nvim-lint",
@@ -14,5 +15,7 @@ return {
 				lint.try_lint()
 			end,
 		})
+
+		linters_setup()
 	end,
 }

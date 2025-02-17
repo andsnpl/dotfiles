@@ -13,12 +13,17 @@ brew upgrade
 brew cleanup
 echo "----------\n"
 
+echo "[$(date -j +'%Y-%m-%dT%T%z')] Updating programming languages with Mise"
+echo "----------"
+mise upgrade
+echo "----------\n"
+
 echo "[$(date -j +'%Y-%m-%dT%T%z')] Updating Rust toolchain"
 echo "----------"
 rustup update
 echo "----------\n"
 
-echo "[$(date -j +'%Y-%m-%dT%T%z')] Updating Node toolchain"
+echo "[$(date -j +'%Y-%m-%dT%T%z')] Updating Node packages"
 echo "----------"
 npm update -g
 echo "----------\n"

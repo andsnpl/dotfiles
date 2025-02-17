@@ -1,4 +1,5 @@
 local formatters_by_ft = require("paul.lang").formatters_by_ft
+local formatters_setup = require("paul.lang").formatters_setup
 
 return {
 	"stevearc/conform.nvim",
@@ -61,5 +62,7 @@ return {
 			desc = "Enable format-on-save",
 			bang = true,
 		})
+
+		formatters_setup()
 	end,
 }

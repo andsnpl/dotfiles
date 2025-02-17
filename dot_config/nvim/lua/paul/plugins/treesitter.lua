@@ -1,4 +1,5 @@
 local treesitter_parsers = require("paul.lang").treesitter_parsers
+local treesitter_parsers_by_ft = require("paul.lang").treesitter_parsers_by_ft
 
 return {
 	"nvim-treesitter/nvim-treesitter",
@@ -60,6 +61,10 @@ return {
 				},
 			},
 		})
+
+		for ft, parser in pairs(treesitter_parsers_by_ft) do
+			vim.treesitter.language.register(parser, ft)
+		end
 
 		miniai.setup({})
 

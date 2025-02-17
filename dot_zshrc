@@ -38,8 +38,8 @@ source $ZSH/oh-my-zsh.sh
 
 # User configuration
 
-export PATH="/usr/local/share/dotnet:$PATH"
 export PATH="$HOME/bin:$PATH"
+export PATH="/usr/local/share/dotnet:$PATH"
 export PATH="$HOME/.dotnet/tools:$PATH"
 export PATH="$HOME/.zig/0.12.0:$PATH"
 export PATH="$HOME/.cargo/bin:$PATH"
@@ -67,6 +67,12 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 # pnpm end
+
+# Herd injected PHP 8.4 configuration.
+export HERD_PHP_84_INI_SCAN_DIR="/Users/paul/Library/Application Support/Herd/config/php/84/"
+
+# Herd injected PHP binary.
+export PATH="/Users/paul/Library/Application Support/Herd/bin/":$PATH
 
 # BEGIN opam configuration
 # This is useful if you're using opam as it adds:
@@ -149,3 +155,4 @@ function chpwd() {
 
 # Set bat as $MANPAGER for nice colors
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+
