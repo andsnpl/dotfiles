@@ -1,0 +1,136 @@
+binds {
+    // === System & Overview ===
+    Mod+Space        { spawn "dms" "ipc" "call" "spotlight" "toggle"; }
+    Mod+Comma        { spawn "dms" "ipc" "call" "settings" "focusOrToggle"; }
+    Mod+Period       { spawn "dms" "ipc" "call" "notifications" "dismissAllPopups"; }
+    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+    Mod+Alt+V        { spawn "dms" "ipc" "call" "clipboard" "toggle"; }
+    Mod+O repeat=false { toggle-overview; }
+    Mod+Alt+L        { spawn "dms" "ipc" "call" "lock" "lock"; }
+    Mod+Alt+N        { spawn "dms" "ipc" "call" "notifications" "toggle"; }
+    Mod+Alt+Escape   { spawn "dms" "ipc" "call" "powermenu" "toggle"; }
+    XF86PowerDown    { spawn "dms" "ipc" "call" "powermenu" "toggle"; }
+    XF86PowerOff     { spawn "dms" "ipc" "call" "powermenu" "toggle"; }
+
+    // === Focus Navigation ===
+    Mod+Left         { focus-column-left; }
+    Mod+Down         { focus-window-or-workspace-down; }
+    Mod+Up           { focus-window-or-workspace-up; }
+    Mod+Right        { focus-column-right; }
+    Mod+H            { focus-column-left; }
+    Mod+J            { focus-window-down; }
+    Mod+K            { focus-window-up; }
+    Mod+L            { focus-column-right; }
+    Mod+Home         { focus-column-first; }
+    Mod+End          { focus-column-last; }
+    Mod+Z            { switch-focus-between-floating-and-tiling; }
+    Mod+Page_Down    { focus-workspace-down; }
+    Mod+Page_Up      { focus-workspace-up; }
+    Mod+D            { focus-workspace-down; }
+    Mod+U            { focus-workspace-up; }
+
+    // === Window Movement ===
+    Mod+Ctrl+Left    { move-column-left; }
+    Mod+Ctrl+Down    { move-window-down-or-to-workspace-down; }
+    Mod+Ctrl+Up      { move-window-up-or-to-workspace-up; }
+    Mod+Ctrl+Right   { move-column-right; }
+    Mod+Ctrl+H       { move-column-left; }
+    Mod+Ctrl+J       { move-window-down; }
+    Mod+Ctrl+K       { move-window-up; }
+    Mod+Ctrl+L       { move-column-right; }
+    Mod+Ctrl+Home    { move-column-to-first; }
+    Mod+Ctrl+End     { move-column-to-last; }
+    Mod+Ctrl+D       { move-window-to-workspace-down; }
+    Mod+Ctrl+U       { move-window-to-workspace-up; }
+    Mod+BracketLeft  { consume-or-expel-window-left; }
+    Mod+BracketRight { consume-or-expel-window-right; }
+
+    // === Window Management ===
+    Mod+W cooldown-ms=200 { close-window; }
+    Mod+Ctrl+Z       { toggle-window-floating; }
+    Mod+Shift+F      { fullscreen-window; }
+    Mod+F            { maximize-column; }
+    Mod+R            { switch-preset-column-width; }
+    Mod+Shift+R      { switch-preset-window-height; }
+    Mod+G            { toggle-column-tabbed-display; }
+    Mod+Alt+C        { center-column; }
+
+    // === Move Workspaces ===
+    Mod+Ctrl+Shift+D { move-workspace-down; }
+    Mod+Ctrl+Shift+U { move-workspace-up; }
+
+    // === Applications ===
+    Mod+T       { spawn "focus-or-launch" "kitty" "uwsm" "app" "--" "kitty"; }
+    Mod+Shift+T { spawn "uwsm" "app" "--" "kitty"; }
+    Mod+B       { spawn "focus-or-launch" "helium" "uwsm" "app" "--" "helium-browser"; }
+    Mod+Shift+B { spawn "uwsm" "app" "--" "helium-browser"; }
+    // Chromium app windows have some weird issues if they're opened both floating and tiled. I'm reserving helium for the tiled layout and chromium for floating windows.
+    Mod+Q       { spawn "focus-or-launch" "chrome-claude.ai__-Default" "uwsm" "app" "--" "helium-browser" "--app=https://claude.ai"; }
+    Mod+Shift+Q { spawn "uwsm" "app" "--" "helium-browser" "--app=https://claude.ai"; }
+    Mod+E       { spawn "toggle-scratch-window-or-launch" "chrome-app.hey.com__-Default" "uwsm" "app" "--" "browser-app" "https://app.hey.com"; }
+    Mod+C       { spawn "toggle-scratch-window-or-launch" "chrome-app.hey.com__calendar-Default" "uwsm" "app" "--" "browser-app" "https://app.hey.com/calendar"; }
+    Mod+M       { spawn "toggle-scratch-window-or-launch" "chrome-youtube.com__-Profile_2" "uwsm" "app" "--" "browser-app" "https://youtube.com" "--profile-directory=Profile 2"; }
+    Mod+N       { spawn "toggle-scratch-window-or-launch" "obsidian" "uwsm" "app" "--" "obsidian"; }
+    Mod+S       { focus-workspace "socials"; }
+    Mod+1       { focus-workspace "main"; }
+
+    // === Audio Controls ===
+    XF86AudioRaiseVolume allow-when-locked=true {
+        spawn "dms" "ipc" "call" "audio" "increment" "3";
+    }
+    XF86AudioLowerVolume allow-when-locked=true {
+        spawn "dms" "ipc" "call" "audio" "decrement" "3";
+    }
+    XF86AudioMute allow-when-locked=true {
+        spawn "dms" "ipc" "call" "audio" "mute";
+    }
+    XF86AudioMicMute allow-when-locked=true {
+        spawn "dms" "ipc" "call" "audio" "micmute";
+    }
+    XF86AudioPause allow-when-locked=true {
+        spawn "dms" "ipc" "call" "mpris" "playPause";
+    }
+    XF86AudioPlay allow-when-locked=true {
+        spawn "dms" "ipc" "call" "mpris" "playPause";
+    }
+    XF86AudioPrev allow-when-locked=true {
+        spawn "dms" "ipc" "call" "mpris" "previous";
+    }
+    XF86AudioNext allow-when-locked=true {
+        spawn "dms" "ipc" "call" "mpris" "next";
+    }
+    Mod+8 allow-when-locked=true {
+        spawn "dms" "ipc" "call" "audio" "decrement" "3";
+    }
+    Mod+9 allow-when-locked=true {
+        spawn "dms" "ipc" "call" "audio" "increment" "3";
+    }
+    Mod+0 allow-when-locked=true {
+        spawn "dms" "ipc" "call" "audio" "mute";
+    }
+    Mod+P allow-when-locked=true {
+        spawn "dms" "ipc" "call" "mpris" "playPause";
+    }
+
+    // === Brightness Controls ===
+    XF86MonBrightnessUp allow-when-locked=true {
+       spawn "dms" "ipc" "call" "brightness" "increment" "5" "";
+    }
+    XF86MonBrightnessDown allow-when-locked=true {
+       spawn "dms" "ipc" "call" "brightness" "decrement" "5" "";
+    }
+    Mod+6 allow-when-locked=true {
+       spawn "dms" "ipc" "call" "brightness" "decrement" "5" "";
+    }
+    Mod+7 allow-when-locked=true {
+       spawn "dms" "ipc" "call" "brightness" "increment" "5" "";
+    }
+
+    // === Screenshots ===
+    XF86Launch1 { screenshot; }
+    Ctrl+XF86Launch1 { screenshot-screen; }
+    Alt+XF86Launch1 { screenshot-window; }
+    Print { screenshot; }
+    Ctrl+Print { screenshot-screen; }
+    Alt+Print { screenshot-window; }
+}
