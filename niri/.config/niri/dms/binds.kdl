@@ -67,8 +67,8 @@ binds {
     // Chromium app windows have some weird issues if they're opened both floating and tiled. I'm reserving helium for the tiled layout and chromium for floating windows.
     Mod+Q       { spawn "focus-or-launch" "chrome-claude.ai__-Default" "uwsm" "app" "--" "helium-browser" "--app=https://claude.ai"; }
     Mod+Shift+Q { spawn "uwsm" "app" "--" "helium-browser" "--app=https://claude.ai"; }
-    Mod+E       { spawn "toggle-scratch-window-or-launch" "chrome-app.hey.com__-Default" "uwsm" "app" "--" "browser-app" "https://app.hey.com"; }
-    Mod+C       { spawn "toggle-scratch-window-or-launch" "chrome-app.hey.com__calendar-Default" "uwsm" "app" "--" "browser-app" "https://app.hey.com/calendar"; }
+    Mod+E       { spawn "toggle-scratch-window-or-launch" "chrome-app.hey.com__-Default" "uwsm" "app" "--" "browser-app" "https://app.hey.com" "--profile-directory=Default"; }
+    Mod+C       { spawn "toggle-scratch-window-or-launch" "chrome-app.hey.com__calendar-Default" "uwsm" "app" "--" "browser-app" "https://app.hey.com/calendar" "--profile-directory=Default"; }
     Mod+M       { spawn "toggle-scratch-window-or-launch" "chrome-youtube.com__-Profile_2" "uwsm" "app" "--" "browser-app" "https://youtube.com" "--profile-directory=Profile 2"; }
     Mod+N       { spawn "toggle-scratch-window-or-launch" "obsidian" "uwsm" "app" "--" "obsidian"; }
     Mod+S       { focus-workspace "socials"; }
