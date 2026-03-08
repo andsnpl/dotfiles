@@ -5,3 +5,19 @@ trusted_config_paths = [
     '/sources',
 ]
 
+[tools]
+node = "latest"
+python = "latest"
+uv = "latest"
+bun = "latest"
+rust = "latest"
+jq = "latest"
+fzf = "latest"
+eza = "latest"
+fd = "latest"
+bat = "latest"
+neovim = "latest"
+shellcheck = "latest"
+ripgrep = "latest"
+starship = "latest"
+
