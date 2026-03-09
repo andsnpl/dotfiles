@@ -20,4 +20,5 @@ neovim = "latest"
 shellcheck = "latest"
 ripgrep = "latest"
 starship = "latest"
+imagemagick = "latest"
 
