@@ -3,6 +3,7 @@ set -euo pipefail
 
 USERNAME="paul"
 USERHOME="/home/$USERNAME"
+HOSTNAME="devbox"
 DOTFILES_REPO="https://github.com/andsnpl/dotfiles.git"
 DOTFILES_DIR="$USERHOME/.dotfiles"
 
@@ -18,12 +19,13 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
-# ── 1. System packages & user setup ─────────────────────────────────────────
+# ── 1. System & user setup ──────────────────────────────────────────────────
 info "Updating package index and installing system packages…"
 apt-get update -qq
-apt-get upgrade -yqq
 apt-get install -yqq --no-install-recommends \
   curl git build-essential zsh stow ca-certificates gnupg kitty
+
+hostnamectl set-hostname "$HOSTNAME"
 
 info "Creating user $USERNAME with zsh shell…"
 if ! id "$USERNAME" &>/dev/null; then
