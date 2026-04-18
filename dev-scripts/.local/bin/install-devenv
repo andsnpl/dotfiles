@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+USERNAME="paul"
+DOTFILES_REPO="https://github.com/andsnpl/dotfiles.git"
+DOTFILES_DIR="/home/$USERNAME/.dotfiles"
+
+# ── Colours for logging ──────────────────────────────────────────────────────
+info()  { printf '\033[0;34m[INFO]\033[0m  %s\n' "$*"; }
+ok()    { printf '\033[0;32m[ OK ]\033[0m  %s\n' "$*"; }
+warn()  { printf '\033[0;33m[WARN]\033[0m  %s\n' "$*" >&2; }
+error() { printf '\033[0;31m[ERR ]\033[0m  %s\n' "$*" >&2; }
+
+# ── Require root ─────────────────────────────────────────────────────────────
+if [[ $EUID -ne 0 ]]; then
+  error "This script must be run as root."
+  exit 1
+fi
+
+# ── 1. System packages & user setup ─────────────────────────────────────────
+info "Updating package index and installing system packages…"
+apt-get update -qq
+apt-get upgrade -yqq
+apt-get install -yqq --no-install-recommends \
+  curl git build-essential zsh stow ca-certificates gnupg
+
+info "Creating user $USERNAME with zsh shell…"
+if ! id "$USERNAME" &>/dev/null; then
+  useradd -m -s "$(which zsh)" "$USERNAME"
+  ok "User $USERNAME created."
+else
+  # Ensure shell is zsh even if user already existed
+  chsh -s "$(which zsh)" "$USERNAME"
+  ok "User $USERNAME already exists — shell set to zsh."
+fi
+
+info "Configuring passwordless sudo for $USERNAME…"
+cat > "/etc/sudoers.d/$USERNAME" <<SUDOERS
+$USERNAME ALL=(ALL) NOPASSWD:ALL
+SUDOERS
+chmod 0440 "/etc/sudoers.d/$USERNAME"
+ok "Sudoers entry written."
+
+# ── Helper: run a command as $USERNAME ───────────────────────────────────────
+as_user() {
+  su - "$USERNAME" -c "$*"
+}
+
+# ── 2. Install mise ──────────────────────────────────────────────────────────
+info "Installing mise…"
+as_user 'curl -fsSL https://mise.run | sh'
+ok "mise installed to ~/.local/bin/mise"
+
+# ── 3. Install Homebrew (Linuxbrew) ─────────────────────────────────────────
+info "Installing Homebrew…"
+as_user 'curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | NONINTERACTIVE=1 bash'
+
+# Add brew to PATH for subsequent commands
+BREW_ROOT="/home/linuxbrew/.linuxbrew"
+BREW_BIN="$BREW_ROOT/bin/brew"
+
+info "Installing Homebrew packages…"
+as_user "eval \"\$($BREW_ROOT/bin/brew shellenv)\" && brew install jq yq fzf eza fd bat ripgrep starship neovim imagemagick"
+ok "Homebrew packages installed."
+
+# ── 4. Clone dotfiles & stow ─────────────────────────────────────────────────
+info "Cloning dotfiles from $DOTFILES_REPO…"
+if [[ -d "$DOTFILES_DIR/.git" ]]; then
+  as_user "cd $DOTFILES_DIR && git pull --ff-only"
+  ok "Dotfiles updated."
+else
+  as_user "git clone $DOTFILES_REPO $DOTFILES_DIR"
+  ok "Dotfiles cloned."
+fi
+
+info "Stowing dotfiles (skipping local-*, macos-*, windows-*)…"
+# List top-level directories, filter out excluded prefixes, stow each one
+STOW_PACKAGES=$(ls "$DOTFILES_DIR" \
+  | grep -v -E '^(local-|macos-|windows-).*$' \
+  | xargs echo)
+
+as_user "rm ~/.profile"
+as_user "cd $DOTFILES_DIR && stow $STOW_PACKAGES"
+ok "Dotfiles stowed: $STOW_PACKAGES"
+
+# ── 5. Install tools from mise config ────────────────────────────────────────
+info "Installing tools from mise config…"
+as_user "~/.local/bin/mise install"
+ok "mise tools installed."
+
+# ── Done ─────────────────────────────────────────────────────────────────────
+echo ""
+ok "Devenv setup complete for $USERNAME."
+echo "  • Shell: zsh"
+echo "  • Dotfiles: $DOTFILES_DIR"
+echo "  • mise:     ~/.local/bin/mise"
+echo "  • brew:     $BREW_BIN"
+echo ""
+info "Log in as $USERNAME to start using your dev environment."
+
+reboot
