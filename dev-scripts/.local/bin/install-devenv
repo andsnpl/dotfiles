@@ -40,7 +40,7 @@ fi
 
 info "Copying SSH keys"
 mkdir -p "$USERHOME/.ssh"
-cp "$USERHOME/.ssh/authorized_keys" "$HOME/.ssh/authorized_keys"
+cp "$HOME/.ssh/authorized_keys" "$USERHOME/.ssh/authorized_keys"
 chown -R "$USERNAME:$USERNAME" "$USERHOME/.ssh"
 ok "Authorized SSH keys copied from root"
 
