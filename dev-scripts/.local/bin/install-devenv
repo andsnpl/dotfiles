@@ -85,7 +85,7 @@ STOW_PACKAGES=$(ls "$DOTFILES_DIR" \
   | xargs echo)
 
 as_user "rm ~/.profile"
-as_user "cd $DOTFILES_DIR && stow $STOW_PACKAGES"
+as_user "cd $DOTFILES_DIR && stow -R $STOW_PACKAGES"
 ok "Dotfiles stowed: $STOW_PACKAGES"
 
 # ── 5. Install tools from mise config ────────────────────────────────────────
