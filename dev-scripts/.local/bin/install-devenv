@@ -23,20 +23,23 @@ info "Updating package index and installing system packages…"
 apt-get update -qq
 apt-get upgrade -yqq
 apt-get install -yqq --no-install-recommends \
-  curl git build-essential zsh stow ca-certificates gnupg
+  curl git build-essential zsh stow ca-certificates gnupg kitty
 
 info "Creating user $USERNAME with zsh shell…"
 if ! id "$USERNAME" &>/dev/null; then
-  useradd -m -s "$(which zsh)" "$USERNAME"
+  useradd -m -s "$(which zsh)" -U "$USERNAME"
   ok "User $USERNAME created."
 else
-  # Ensure shell is zsh even if user already existed
   chsh -s "$(which zsh)" "$USERNAME"
-  ok "User $USERNAME already exists — shell set to zsh."
+  groupadd "$USERNAME" 2>/dev/null || true
+  usermod -aG "$USERNAME" "$USERNAME"
+  ok "User $USERNAME already exists — shell set to zsh, group membership ensured."
 fi
+
 info "Copying SSH keys"
 mkdir -p "$USERHOME/.ssh"
-cp "$HOME/.ssh/authorized_keys" "$USERHOME/.ssh/authorized_keys"
+cp "$USERHOME/.ssh/authorized_keys" "$HOME/.ssh/authorized_keys"
+chown -R "$USERNAME:$USERNAME" "$USERHOME/.ssh"
 ok "Authorized SSH keys copied from root"
 
 info "Configuring passwordless sudo for $USERNAME…"
@@ -60,12 +63,10 @@ ok "mise installed to ~/.local/bin/mise"
 info "Installing Homebrew…"
 as_user 'curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | NONINTERACTIVE=1 bash'
 
-# Add brew to PATH for subsequent commands
-BREW_ROOT="/home/linuxbrew/.linuxbrew"
-BREW_BIN="$BREW_ROOT/bin/brew"
+BREW_BIN="/home/linuxbrew/.linuxbrew/bin/brew"
 
 info "Installing Homebrew packages…"
-as_user "eval \"\$($BREW_ROOT/bin/brew shellenv)\" && brew install jq yq fzf eza fd bat ripgrep starship neovim imagemagick"
+as_user "eval \"\$($BREW_BIN shellenv)\" && brew install jq yq fzf eza fd bat ripgrep starship neovim imagemagick"
 ok "Homebrew packages installed."
 
 # ── 4. Clone dotfiles & stow ─────────────────────────────────────────────────
