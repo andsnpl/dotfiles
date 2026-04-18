@@ -2,8 +2,9 @@
 set -euo pipefail
 
 USERNAME="paul"
+USERHOME="/home/$USERNAME"
 DOTFILES_REPO="https://github.com/andsnpl/dotfiles.git"
-DOTFILES_DIR="/home/$USERNAME/.dotfiles"
+DOTFILES_DIR="$USERHOME/.dotfiles"
 
 # ── Colours for logging ──────────────────────────────────────────────────────
 info()  { printf '\033[0;34m[INFO]\033[0m  %s\n' "$*"; }
@@ -33,6 +34,10 @@ else
   chsh -s "$(which zsh)" "$USERNAME"
   ok "User $USERNAME already exists — shell set to zsh."
 fi
+info "Copying SSH keys"
+mkdir -p "$USERHOME/.ssh"
+cp "$HOME/.ssh/authorized_keys" "$USERHOME/.ssh/authorized_keys"
+ok "Authorized SSH keys copied from root"
 
 info "Configuring passwordless sudo for $USERNAME…"
 cat > "/etc/sudoers.d/$USERNAME" <<SUDOERS
@@ -97,5 +102,3 @@ echo "  • mise:     ~/.local/bin/mise"
 echo "  • brew:     $BREW_BIN"
 echo ""
 info "Log in as $USERNAME to start using your dev environment."
-
-reboot
