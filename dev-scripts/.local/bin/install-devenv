@@ -96,6 +96,22 @@ info "Installing tools from mise config…"
 as_user "~/.local/bin/mise install"
 ok "mise tools installed."
 
+# ── 6. Install pnpm & configure global settings ────────────────────────────────
+info "Installing pnpm…"
+as_user "npm install -g corepack"
+as_user "corepack enable pnpm"
+ok "pnpm installed."
+
+info "Configuring pnpm global settings…"
+as_user "pnpm config set minimumReleaseAge 2days"
+as_user "pnpm config set blockExoticSubdeps true"
+as_user "pnpm config set trustPolicy no-downgrade"
+ok "pnpm global settings applied (minimumReleaseAge=2days, blockExoticSubdeps=true, trustPolicy=no-downgrade)."
+
+info "Installing @mariozechner/pi-coding-agent globally…"
+as_user "pnpm install -g @mariozechner/pi-coding-agent"
+ok "pi-coding-agent installed globally."
+
 # ── Done ─────────────────────────────────────────────────────────────────────
 echo ""
 ok "Devenv setup complete for $USERNAME."
@@ -103,5 +119,6 @@ echo "  • Shell: zsh"
 echo "  • Dotfiles: $DOTFILES_DIR"
 echo "  • mise:     ~/.local/bin/mise"
 echo "  • brew:     $BREW_BIN"
+echo "  • pnpm:     $PNPM_HOME/pnpm"
 echo ""
 info "Log in as $USERNAME to start using your dev environment."
