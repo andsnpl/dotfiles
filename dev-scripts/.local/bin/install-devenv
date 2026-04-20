@@ -8,7 +8,7 @@ USERHOME="/home/$USERNAME"
 GPG_EMAIL="$USERNAME@$HOSTNAME"
 DOTFILES_REPO="https://github.com/andsnpl/dotfiles.git"
 DOTFILES_DIR="$USERHOME/.dotfiles"
-# Will fill these in later
+# Will fill these in with configure()
 GENERATE_SSH_KEY=0
 GENERATE_GPG_KEY=0
 PASSPHRASE=
@@ -20,7 +20,6 @@ ok()    { printf '\033[0;32m[ OK ]\033[0m  %s\n' "$*"; }
 warn()  { printf '\033[0;33m[WARN]\033[0m  %s\n' "$*" >&2; }
 error() { printf '\033[0;31m[ERR ]\033[0m  %s\n' "$*" >&2; }
 
-# ── Helpers ─────────────────────────────────────────────────────────────────
 confirm() {
   local prompt="$1" reply
   while true; do
@@ -34,9 +33,51 @@ confirm() {
 }
 
 # ═════════════════════════════════════════════════════════════════════════════
-# Root-mode: system & user provisioning, then hand off to user
+# Configure: pre-flight checks before installing
 # ═════════════════════════════════════════════════════════════════════════════
-root_install() {
+configure() {
+  if [[ ! -f $USERHOME/.ssh/id_ed25519 ]]; then
+    GENERATE_SSH_KEY=1
+  else
+    warn "Existing SSH key found at ~/.ssh/id_ed25519"
+    confirm "Delete and regenerate SSH key?" && GENERATE_SSH_KEY=1
+  fi
+
+  if ! id -u "$USERNAME" &>/dev/null; then
+    GENERATE_GPG_KEY=1
+  else
+    GPG_KEY_ID=$(su - "$USERNAME" -c \
+      "gpg --list-keys --with-colons $GPG_EMAIL 2>/dev/null || true" \
+      | awk -F: '/fpr/ {print $10; exit}')
+    if [[ -z $GPG_KEY_ID ]]; then
+      GENERATE_GPG_KEY=1
+    else
+      warn "Existing GPG key found for $GPG_EMAIL (fingerprint: $GPG_KEY_ID)"
+      confirm "Delete and regenerate GPG key?" && GENERATE_GPG_KEY=1
+    fi
+  fi
+
+  while (( $GENERATE_SSH_KEY )) || (( $GENERATE_GPG_KEY )); do
+    read -s -p "Enter passphrase for SSH/GPG keys: " PASSPHRASE
+    printf '\n' >&2
+    if [[ -z $PASSPHRASE ]]; then
+      error "Passphrase cannot be empty."
+      continue
+    fi
+    read -s -p "Confirm passphrase: " PASSPHRASE_CONFIRM
+    printf '\n' >&2
+    if [[ $PASSPHRASE != $PASSPHRASE_CONFIRM ]]; then
+      error "Passphrases do not match."
+      continue
+    fi
+    break
+  done
+}
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Root-mode: system & user provisioning
+# ═════════════════════════════════════════════════════════════════════════════
+root_mode_install() {
   # ── 1. System & user setup ─────────────────────────────────────────────────
   info "Updating package index and installing system packages…"
   apt-get update -qq
@@ -68,29 +109,10 @@ $USERNAME ALL=(ALL) NOPASSWD:ALL
 SUDOERS
   chmod 0440 "/etc/sudoers.d/$USERNAME"
   ok "Sudoers entry written."
-
-  # ── Hand off to user ───────────────────────────────────────────────────────
-  info "Switching to $USERNAME for user-mode setup…"
-  exec su - "$USERNAME" -s "$(which bash)" <<EOF
-set -euo pipefail
-
-USERNAME=$(printf '%q' "$USERNAME")
-USERHOME=$(printf '%q' "$USERHOME")
-GPG_EMAIL=$(printf '%q' "$GPG_EMAIL")
-GENERATE_SSH_KEY=$(printf '%q' "$GENERATE_SSH_KEY")
-GENERATE_GPG_KEY=$(printf '%q' "$GENERATE_GPG_KEY")
-PASSPHRASE=$(printf '%q' "$PASSPHRASE")
-GPG_KEY_ID=$(printf '%q' "$GPG_KEY_ID")
-DOTFILES_REPO=$(printf '%q' "$DOTFILES_REPO")
-DOTFILES_DIR=$(printf '%q' "$DOTFILES_DIR")
-
-$(declare -f info ok warn error user_mode_install)
-user_mode_install
-EOF
 }
 
 # ═════════════════════════════════════════════════════════════════════════════
-# User-mode: per-user setup (no root needed)
+# User-mode: per-user setup
 # ═════════════════════════════════════════════════════════════════════════════
 user_mode_install() {
   # ── 2. Generate SSH key ────────────────────────────────────────────────────
@@ -142,7 +164,7 @@ user_mode_install() {
 
   # ── 7. Clone dotfiles & stow ───────────────────────────────────────────────
   info "Cloning dotfiles from $DOTFILES_REPO…"
-  if [[ -d "$DOTFILES_DIR/.git" ]]; then
+  if [[ -d $DOTFILES_DIR/.git ]]; then
     cd "$DOTFILES_DIR" && git pull --ff-only
     ok "Dotfiles updated."
   else
@@ -194,7 +216,7 @@ user_mode_install() {
   echo ""
   info "Log in as $USERNAME to start using your dev environment."
   info "Post-install steps:"
-  echo "  • Install LLM API keys:  pass insert OPENAI_API_KEY"
+  echo "  • Install LLM API keys: pass insert OPENAI_API_KEY"
   echo "  • Authorise SSH key on GitHub (Settings → SSH Keys):"
   cat ~/.ssh/id_ed25519.pub
 }
@@ -210,41 +232,24 @@ if [[ ! -t 0 ]]; then
   exit 1
 fi
 
-if [[ ! -f $USERHOME/.ssh/id_ed25519 ]]; then
-  GENERATE_SSH_KEY=1
-else
-  warn "Existing SSH key found at ~/.ssh/id_ed25519"
-  confirm "Delete and regenerate SSH key?" && GENERATE_SSH_KEY=1
-fi
+configure
+root_mode_install
 
-if ! id -u "$USERNAME" &>/dev/null; then
-  GENERATE_GPG_KEY=1
-else
-  GPG_KEY_ID=$(su - "$USERNAME" -c \
-    "gpg --list-keys --with-colons $GPG_EMAIL 2>/dev/null || true" \
-    | awk -F: '/fpr/ {print $10; exit}')
-  if [[ -z $GPG_KEY_ID ]]; then
-    GENERATE_GPG_KEY=1
-  else
-    warn "Existing GPG key found for $GPG_EMAIL (fingerprint: $GPG_KEY_ID)"
-    confirm "Delete and regenerate GPG key?" && GENERATE_GPG_KEY=1
-  fi
-fi
+info "Switching to $USERNAME for user-mode setup…"
 
-while (( $GENERATE_SSH_KEY )) || (( $GENERATE_GPG_KEY )); do
-  read -s -p "Enter passphrase for SSH/GPG keys: " PASSPHRASE
-  printf '\n' >&2
-  if [[ -z "$PASSPHRASE" ]]; then
-    error "Passphrase cannot be empty."
-    continue
-  fi
-  read -s -p "Confirm passphrase: " PASSPHRASE_CONFIRM
-  printf '\n' >&2
-  if [[ "$PASSPHRASE" != "$PASSPHRASE_CONFIRM" ]]; then
-    error "Passphrases do not match."
-    continue
-  fi
-  break
-done
+exec su - "$USERNAME" -s "$(which bash)" <<EOF
+set -euo pipefail
 
-root_install
+USERNAME=$(printf '%q' "$USERNAME")
+USERHOME=$(printf '%q' "$USERHOME")
+GPG_EMAIL=$(printf '%q' "$GPG_EMAIL")
+GENERATE_SSH_KEY=$(printf '%q' "$GENERATE_SSH_KEY")
+GENERATE_GPG_KEY=$(printf '%q' "$GENERATE_GPG_KEY")
+PASSPHRASE=$(printf '%q' "$PASSPHRASE")
+GPG_KEY_ID=$(printf '%q' "$GPG_KEY_ID")
+DOTFILES_REPO=$(printf '%q' "$DOTFILES_REPO")
+DOTFILES_DIR=$(printf '%q' "$DOTFILES_DIR")
+
+$(declare -f info ok warn error user_mode_install)
+user_mode_install
+EOF
