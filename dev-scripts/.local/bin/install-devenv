@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
 
+HOSTNAME="devbox"
 USERNAME="paul"
 USERHOME="/home/$USERNAME"
-HOSTNAME="devbox"
+GPG_EMAIL="$USERNAME@$HOSTNAME"
 DOTFILES_REPO="https://github.com/andsnpl/dotfiles.git"
 DOTFILES_DIR="$USERHOME/.dotfiles"
+# Will fill these in later
+GENERATE_SSH_KEY=0
+GENERATE_GPG_KEY=0
+PASSPHRASE=
+GPG_KEY_ID=
 
 # ── Colours for logging ──────────────────────────────────────────────────────
 info()  { printf '\033[0;34m[INFO]\033[0m  %s\n' "$*"; }
@@ -13,114 +20,231 @@ ok()    { printf '\033[0;32m[ OK ]\033[0m  %s\n' "$*"; }
 warn()  { printf '\033[0;33m[WARN]\033[0m  %s\n' "$*" >&2; }
 error() { printf '\033[0;31m[ERR ]\033[0m  %s\n' "$*" >&2; }
 
-# ── Require root ─────────────────────────────────────────────────────────────
+# ── Helpers ─────────────────────────────────────────────────────────────────
+confirm() {
+  local prompt="$1" reply
+  while true; do
+    printf '\033[0;33m[ ?? ]\033[0m  %s [y/N] ' "$prompt"
+    read -r reply < /dev/tty
+    case "$reply" in
+      Y|y) printf '\n'; return 0 ;;
+      N|n|'') printf '\n'; return 1 ;;
+    esac
+  done
+}
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Root-mode: system & user provisioning, then hand off to user
+# ═════════════════════════════════════════════════════════════════════════════
+root_install() {
+  # ── 1. System & user setup ─────────────────────────────────────────────────
+  info "Updating package index and installing system packages…"
+  apt-get update -qq
+  apt-get install -yqq --no-install-recommends \
+    curl git build-essential zsh stow ca-certificates gnupg pass kitty
+
+  hostnamectl set-hostname "$HOSTNAME"
+
+  info "Creating user $USERNAME with zsh shell…"
+  if ! id "$USERNAME" &>/dev/null; then
+    useradd -m -s "$(which zsh)" -U "$USERNAME"
+    ok "User $USERNAME created."
+  else
+    chsh -s "$(which zsh)" "$USERNAME"
+    groupadd "$USERNAME" 2>/dev/null || true
+    usermod -aG "$USERNAME" "$USERNAME"
+    ok "User $USERNAME already exists — shell set to zsh, group membership ensured."
+  fi
+
+  info "Copying SSH keys"
+  mkdir -p "$USERHOME/.ssh"
+  cp "$HOME/.ssh/authorized_keys" "$USERHOME/.ssh/authorized_keys"
+  chown -R "$USERNAME:$USERNAME" "$USERHOME/.ssh"
+  ok "Authorized SSH keys copied from root"
+
+  info "Configuring passwordless sudo for $USERNAME…"
+  cat > "/etc/sudoers.d/$USERNAME" <<SUDOERS
+$USERNAME ALL=(ALL) NOPASSWD:ALL
+SUDOERS
+  chmod 0440 "/etc/sudoers.d/$USERNAME"
+  ok "Sudoers entry written."
+
+  # ── Hand off to user ───────────────────────────────────────────────────────
+  info "Switching to $USERNAME for user-mode setup…"
+  exec su - "$USERNAME" -s "$(which bash)" <<EOF
+set -euo pipefail
+
+USERNAME=$(printf '%q' "$USERNAME")
+USERHOME=$(printf '%q' "$USERHOME")
+GPG_EMAIL=$(printf '%q' "$GPG_EMAIL")
+GENERATE_SSH_KEY=$(printf '%q' "$GENERATE_SSH_KEY")
+GENERATE_GPG_KEY=$(printf '%q' "$GENERATE_GPG_KEY")
+PASSPHRASE=$(printf '%q' "$PASSPHRASE")
+GPG_KEY_ID=$(printf '%q' "$GPG_KEY_ID")
+DOTFILES_REPO=$(printf '%q' "$DOTFILES_REPO")
+DOTFILES_DIR=$(printf '%q' "$DOTFILES_DIR")
+
+$(declare -f info ok warn error user_mode_install)
+user_mode_install
+EOF
+}
+
+# ═════════════════════════════════════════════════════════════════════════════
+# User-mode: per-user setup (no root needed)
+# ═════════════════════════════════════════════════════════════════════════════
+user_mode_install() {
+  # ── 2. Generate SSH key ────────────────────────────────────────────────────
+  if (( $GENERATE_SSH_KEY )); then
+    info "Generating SSH key (ed25519)…"
+    rm -f ~/.ssh/id_ed25519 ~/.ssh/id_ed25519.pub
+    ssh-keygen -t ed25519 -N "$PASSPHRASE" -C "paul@devbox" -f ~/.ssh/id_ed25519
+    ok "SSH key generated."
+  fi
+
+  # ── 3. Generate GPG key ────────────────────────────────────────────────────
+  if (( $GENERATE_GPG_KEY )); then
+    if [[ -n $GPG_KEY_ID ]]; then
+      info "Deleting existing GPG key"
+      gpg --batch --yes --delete-secret-key "$GPG_KEY_ID"
+      gpg --batch --yes --delete-key "$GPG_KEY_ID"
+    fi
+    info "Generating GPG key…"
+    GPG_KE_ID=$(gpg --batch --pinentry-mode loopback --status-fd 1 \
+      --passphrase "$PASSPHRASE" --quick-generate-key "$GPG_EMAIL" rsa4096 default 0 \
+      | awk '/KEY_CREATED/ {print $4; exit}')
+    ok "GPG key generated: $GPG_KEY_ID"
+  fi
+
+  # ── 4. Initialise pass ─────────────────────────────────────────────────────
+  if [[ -n $GPG_KEY_ID ]]; then
+    info "Initialising password store…"
+    rm -f "$USERHOME/.password-store/.gpg-id"
+    pass init "$GPG_KEY_ID"
+    ok "pass initialised with GPG key $GPG_KEY_ID"
+  else
+    warn "Skipping pass initialisation (no GPG key)."
+  fi
+
+  # ── 5. Install mise ────────────────────────────────────────────────────────
+  info "Installing mise…"
+  curl -fsSL https://mise.run | sh
+  ok "mise installed to ~/.local/bin/mise"
+
+  # ── 6. Install Homebrew (Linuxbrew) ────────────────────────────────────────
+  info "Installing Homebrew…"
+  curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | NONINTERACTIVE=1 bash
+
+  BREW_BIN="/home/linuxbrew/.linuxbrew/bin/brew"
+
+  info "Installing Homebrew packages…"
+  eval "$("$BREW_BIN" shellenv)" && brew install jq yq fzf eza fd bat ripgrep starship neovim imagemagick
+  ok "Homebrew packages installed."
+
+  # ── 7. Clone dotfiles & stow ───────────────────────────────────────────────
+  info "Cloning dotfiles from $DOTFILES_REPO…"
+  if [[ -d "$DOTFILES_DIR/.git" ]]; then
+    cd "$DOTFILES_DIR" && git pull --ff-only
+    ok "Dotfiles updated."
+  else
+    git clone "$DOTFILES_REPO" "$DOTFILES_DIR"
+    ok "Dotfiles cloned."
+  fi
+
+  info "Stowing dotfiles (skipping local-*, macos-*, windows-*)…"
+  STOW_PACKAGES=$(ls "$DOTFILES_DIR" \
+    | grep -v -E '^(local-|macos-|windows-).*$' \
+    | xargs echo)
+
+  rm ~/.profile
+  cd "$DOTFILES_DIR" && stow -R $STOW_PACKAGES
+  ok "Dotfiles stowed: $STOW_PACKAGES"
+
+  # ── 8. Install tools from mise config ──────────────────────────────────────
+  info "Installing tools from mise config…"
+  ~/.local/bin/mise install
+  ok "mise tools installed."
+
+  # ── 9. Install pnpm & configure global settings ────────────────────────────
+  info "Installing pnpm…"
+  npm install -g corepack
+  corepack enable pnpm
+  ok "pnpm installed."
+
+  PNPM_BIN="$(which pnpm)"
+
+  info "Configuring pnpm global settings…"
+  pnpm config set minimumReleaseAge 2880
+  pnpm config set blockExoticSubdeps true
+  pnpm config set trustPolicy no-downgrade
+  ok "pnpm global settings applied (minimumReleaseAge=2 days, blockExoticSubdeps=true, trustPolicy=no-downgrade)."
+
+  # ── 10. Install coding agent ────────────────────────────────────────────────
+  info "Installing @mariozechner/pi-coding-agent globally…"
+  pnpm install -g @mariozechner/pi-coding-agent@latest
+  ok "pi-coding-agent installed globally."
+
+  # ── Done ───────────────────────────────────────────────────────────────────
+  echo ""
+  ok "Devenv setup complete for $USERNAME."
+  echo "  • Dotfiles: ${DOTFILES_DIR/#$USERHOME/\~}"
+  echo "  • Shell:    zsh"
+  echo "  • mise:     ~/.local/bin/mise"
+  echo "  • brew:     ${BREW_BIN/#$USERHOME/\~}"
+  echo "  • pnpm:     ${PNPM_BIN/#$USERHOME/\~}"
+  echo ""
+  info "Log in as $USERNAME to start using your dev environment."
+  info "Post-install steps:"
+  echo "  • Install LLM API keys:  pass insert OPENAI_API_KEY"
+  echo "  • Authorise SSH key on GitHub (Settings → SSH Keys):"
+  cat ~/.ssh/id_ed25519.pub
+}
+
+# ── Entry point ──────────────────────────────────────────────────────────────
 if [[ $EUID -ne 0 ]]; then
   error "This script must be run as root."
   exit 1
 fi
 
-# ── 1. System & user setup ──────────────────────────────────────────────────
-info "Updating package index and installing system packages…"
-apt-get update -qq
-apt-get install -yqq --no-install-recommends \
-  curl git build-essential zsh stow ca-certificates gnupg kitty
-
-hostnamectl set-hostname "$HOSTNAME"
-
-info "Creating user $USERNAME with zsh shell…"
-if ! id "$USERNAME" &>/dev/null; then
-  useradd -m -s "$(which zsh)" -U "$USERNAME"
-  ok "User $USERNAME created."
-else
-  chsh -s "$(which zsh)" "$USERNAME"
-  groupadd "$USERNAME" 2>/dev/null || true
-  usermod -aG "$USERNAME" "$USERNAME"
-  ok "User $USERNAME already exists — shell set to zsh, group membership ensured."
+if [[ ! -t 0 ]]; then
+  error "This script requires an interactive terminal."
+  exit 1
 fi
 
-info "Copying SSH keys"
-mkdir -p "$USERHOME/.ssh"
-cp "$HOME/.ssh/authorized_keys" "$USERHOME/.ssh/authorized_keys"
-chown -R "$USERNAME:$USERNAME" "$USERHOME/.ssh"
-ok "Authorized SSH keys copied from root"
-
-info "Configuring passwordless sudo for $USERNAME…"
-cat > "/etc/sudoers.d/$USERNAME" <<SUDOERS
-$USERNAME ALL=(ALL) NOPASSWD:ALL
-SUDOERS
-chmod 0440 "/etc/sudoers.d/$USERNAME"
-ok "Sudoers entry written."
-
-# ── Helper: run a command as $USERNAME ───────────────────────────────────────
-as_user() {
-  su - "$USERNAME" -c "$*"
-}
-
-# ── 2. Install mise ──────────────────────────────────────────────────────────
-info "Installing mise…"
-as_user 'curl -fsSL https://mise.run | sh'
-ok "mise installed to ~/.local/bin/mise"
-
-# ── 3. Install Homebrew (Linuxbrew) ──────────────────────────────────────────
-info "Installing Homebrew…"
-as_user 'curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | NONINTERACTIVE=1 bash'
-
-BREW_BIN="/home/linuxbrew/.linuxbrew/bin/brew"
-
-info "Installing Homebrew packages…"
-as_user "eval \"\$($BREW_BIN shellenv)\" && brew install jq yq fzf eza fd bat ripgrep starship neovim imagemagick"
-ok "Homebrew packages installed."
-
-# ── 4. Clone dotfiles & stow ─────────────────────────────────────────────────
-info "Cloning dotfiles from $DOTFILES_REPO…"
-if [[ -d "$DOTFILES_DIR/.git" ]]; then
-  as_user "cd $DOTFILES_DIR && git pull --ff-only"
-  ok "Dotfiles updated."
+if [[ ! -f $USERHOME/.ssh/id_ed25519 ]]; then
+  GENERATE_SSH_KEY=1
 else
-  as_user "git clone $DOTFILES_REPO $DOTFILES_DIR"
-  ok "Dotfiles cloned."
+  warn "Existing SSH key found at ~/.ssh/id_ed25519"
+  confirm "Delete and regenerate SSH key?" && GENERATE_SSH_KEY=1
 fi
 
-info "Stowing dotfiles (skipping local-*, macos-*, windows-*)…"
-# List top-level directories, filter out excluded prefixes, stow each one
-STOW_PACKAGES=$(ls "$DOTFILES_DIR" \
-  | grep -v -E '^(local-|macos-|windows-).*$' \
-  | xargs echo)
+if ! id -u "$USERNAME" &>/dev/null; then
+  GENERATE_GPG_KEY=1
+else
+  GPG_KEY_ID=$(su - "$USERNAME" -c \
+    "gpg --list-keys --with-colons $GPG_EMAIL 2>/dev/null || true" \
+    | awk -F: '/fpr/ {print $10; exit}')
+  if [[ -z $GPG_KEY_ID ]]; then
+    GENERATE_GPG_KEY=1
+  else
+    warn "Existing GPG key found for $GPG_EMAIL (fingerprint: $GPG_KEY_ID)"
+    confirm "Delete and regenerate GPG key?" && GENERATE_GPG_KEY=1
+  fi
+fi
 
-as_user "rm ~/.profile"
-as_user "cd $DOTFILES_DIR && stow -R $STOW_PACKAGES"
-ok "Dotfiles stowed: $STOW_PACKAGES"
+while (( $GENERATE_SSH_KEY )) || (( $GENERATE_GPG_KEY )); do
+  read -s -p "Enter passphrase for SSH/GPG keys: " PASSPHRASE
+  printf '\n' >&2
+  if [[ -z "$PASSPHRASE" ]]; then
+    error "Passphrase cannot be empty."
+    continue
+  fi
+  read -s -p "Confirm passphrase: " PASSPHRASE_CONFIRM
+  printf '\n' >&2
+  if [[ "$PASSPHRASE" != "$PASSPHRASE_CONFIRM" ]]; then
+    error "Passphrases do not match."
+    continue
+  fi
+  break
+done
 
-# ── 5. Install tools from mise config ────────────────────────────────────────
-info "Installing tools from mise config…"
-as_user "~/.local/bin/mise install"
-ok "mise tools installed."
-
-# ── 6. Install pnpm & configure global settings ──────────────────────────────
-info "Installing pnpm…"
-as_user "npm install -g corepack"
-as_user "corepack enable pnpm"
-ok "pnpm installed."
-
-info "Configuring pnpm global settings…"
-as_user "pnpm config set minimumReleaseAge 2880"
-as_user "pnpm config set blockExoticSubdeps true"
-as_user "pnpm config set trustPolicy no-downgrade"
-ok "pnpm global settings applied (minimumReleaseAge=2days, blockExoticSubdeps=true, trustPolicy=no-downgrade)."
-
-# ── 7. Install coding agent ──────────────────────────────────────────────────
-
-info "Installing @mariozechner/pi-coding-agent globally…"
-as_user "pnpm install -g @mariozechner/pi-coding-agent@latest"
-ok "pi-coding-agent installed globally."
-
-# ── Done ─────────────────────────────────────────────────────────────────────
-echo ""
-ok "Devenv setup complete for $USERNAME."
-echo "  • Shell: zsh"
-echo "  • Dotfiles: $DOTFILES_DIR"
-echo "  • mise:     ~/.local/bin/mise"
-echo "  • brew:     $BREW_BIN"
-echo "  • pnpm:     $PNPM_HOME/pnpm"
-echo ""
-info "Log in as $USERNAME to start using your dev environment."
+root_install

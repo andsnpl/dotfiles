@@ -30,6 +30,16 @@ export MANPAGER='bat -l man -p'
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 
+if type pass &>/dev/null; then
+	with_llm_keys() {
+		local a="$(pass ANTHROPIC_API_KEY)"
+		local z="$(pass ZAI_API_KEY)"
+		ANTHROPIC_API_KEY="$a" ZAI_API_KEY="$z" "$1"
+	}
+
+	alias pi='with_llm_keys pi'
+fi
+
 # Prompt / completion tools
 source <(fzf --zsh)
 eval "$(starship init zsh)"
