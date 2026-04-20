@@ -61,7 +61,7 @@ info "Installing mise…"
 as_user 'curl -fsSL https://mise.run | sh'
 ok "mise installed to ~/.local/bin/mise"
 
-# ── 3. Install Homebrew (Linuxbrew) ─────────────────────────────────────────
+# ── 3. Install Homebrew (Linuxbrew) ──────────────────────────────────────────
 info "Installing Homebrew…"
 as_user 'curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | NONINTERACTIVE=1 bash'
 
@@ -96,20 +96,22 @@ info "Installing tools from mise config…"
 as_user "~/.local/bin/mise install"
 ok "mise tools installed."
 
-# ── 6. Install pnpm & configure global settings ────────────────────────────────
+# ── 6. Install pnpm & configure global settings ──────────────────────────────
 info "Installing pnpm…"
 as_user "npm install -g corepack"
 as_user "corepack enable pnpm"
 ok "pnpm installed."
 
 info "Configuring pnpm global settings…"
-as_user "pnpm config set minimumReleaseAge 2days"
+as_user "pnpm config set minimumReleaseAge 2880"
 as_user "pnpm config set blockExoticSubdeps true"
 as_user "pnpm config set trustPolicy no-downgrade"
 ok "pnpm global settings applied (minimumReleaseAge=2days, blockExoticSubdeps=true, trustPolicy=no-downgrade)."
 
+# ── 7. Install coding agent ──────────────────────────────────────────────────
+
 info "Installing @mariozechner/pi-coding-agent globally…"
-as_user "pnpm install -g @mariozechner/pi-coding-agent"
+as_user "pnpm install -g @mariozechner/pi-coding-agent@latest"
 ok "pi-coding-agent installed globally."
 
 # ── Done ─────────────────────────────────────────────────────────────────────
