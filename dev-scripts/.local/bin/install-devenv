@@ -5,7 +5,7 @@ set -euo pipefail
 HOSTNAME="devbox"
 USERNAME="paul"
 USERHOME="/home/$USERNAME"
-GPG_EMAIL="$USERNAME@$HOSTNAME"
+USER_AT="$USERNAME@$HOSTNAME"
 DOTFILES_REPO="https://github.com/andsnpl/dotfiles.git"
 DOTFILES_DIR="$USERHOME/.dotfiles"
 # Will fill these in with configure()
@@ -47,12 +47,12 @@ configure() {
     GENERATE_GPG_KEY=1
   else
     GPG_KEY_ID=$(su - "$USERNAME" -c \
-      "gpg --list-keys --with-colons $GPG_EMAIL 2>/dev/null || true" \
+      "gpg --list-keys --with-colons $USER_AT 2>/dev/null || true" \
       | awk -F: '/fpr/ {print $10; exit}')
     if [[ -z $GPG_KEY_ID ]]; then
       GENERATE_GPG_KEY=1
     else
-      warn "Existing GPG key found for $GPG_EMAIL (fingerprint: $GPG_KEY_ID)"
+      warn "Existing GPG key found for $USER_AT (fingerprint: $GPG_KEY_ID)"
       confirm "Delete and regenerate GPG key?" && GENERATE_GPG_KEY=1
     fi
   fi
@@ -119,7 +119,7 @@ user_mode_install() {
   if (( $GENERATE_SSH_KEY )); then
     info "Generating SSH key (ed25519)…"
     rm -f ~/.ssh/id_ed25519 ~/.ssh/id_ed25519.pub
-    ssh-keygen -t ed25519 -N "$PASSPHRASE" -C "paul@devbox" -f ~/.ssh/id_ed25519
+    ssh-keygen -t ed25519 -N "$PASSPHRASE" -C "$USER_AT" -f ~/.ssh/id_ed25519
     ok "SSH key generated."
   fi
 
@@ -131,8 +131,8 @@ user_mode_install() {
       gpg --batch --yes --delete-key "$GPG_KEY_ID"
     fi
     info "Generating GPG key…"
-    GPG_KE_ID=$(gpg --batch --pinentry-mode loopback --status-fd 1 \
-      --passphrase "$PASSPHRASE" --quick-generate-key "$GPG_EMAIL" rsa4096 default 0 \
+    GPG_KEY_ID=$(gpg --batch --pinentry-mode loopback --status-fd 1 \
+      --passphrase "$PASSPHRASE" --quick-generate-key "$USER_AT" rsa4096 default 0 \
       | awk '/KEY_CREATED/ {print $4; exit}')
     ok "GPG key generated: $GPG_KEY_ID"
   fi
@@ -242,7 +242,7 @@ set -euo pipefail
 
 USERNAME=$(printf '%q' "$USERNAME")
 USERHOME=$(printf '%q' "$USERHOME")
-GPG_EMAIL=$(printf '%q' "$GPG_EMAIL")
+USER_AT=$(printf '%q' "$USER_AT")
 GENERATE_SSH_KEY=$(printf '%q' "$GENERATE_SSH_KEY")
 GENERATE_GPG_KEY=$(printf '%q' "$GENERATE_GPG_KEY")
 PASSPHRASE=$(printf '%q' "$PASSPHRASE")
