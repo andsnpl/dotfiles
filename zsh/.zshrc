@@ -32,8 +32,8 @@ alias grep='grep --color=auto'
 
 if type pass &>/dev/null; then
 	with_llm_keys() {
-		local a="$(pass ANTHROPIC_API_KEY)"
-		local z="$(pass ZAI_API_KEY)"
+		local a="$(pass ANTHROPIC_API_KEY 2>/dev/null)"
+		local z="$(pass ZAI_API_KEY 2>/dev/null)"
 		ANTHROPIC_API_KEY="$a" ZAI_API_KEY="$z" "$1"
 	}
 

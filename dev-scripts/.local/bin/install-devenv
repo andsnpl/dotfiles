@@ -14,7 +14,7 @@ GENERATE_GPG_KEY=0
 PASSPHRASE=
 GPG_KEY_ID=
 
-# ── Colours for logging ──────────────────────────────────────────────────────
+# ── Colors for logging ───────────────────────────────────────────────────────
 info()  { printf '\033[0;34m[INFO]\033[0m  %s\n' "$*"; }
 ok()    { printf '\033[0;32m[ OK ]\033[0m  %s\n' "$*"; }
 warn()  { printf '\033[0;33m[WARN]\033[0m  %s\n' "$*" >&2; }
@@ -132,8 +132,10 @@ user_mode_install() {
     fi
     info "Generating GPG key…"
     GPG_KEY_ID=$(gpg --batch --pinentry-mode loopback --status-fd 1 \
-      --passphrase "$PASSPHRASE" --quick-generate-key "$USER_AT" rsa4096 default 0 \
+      --passphrase "$PASSPHRASE" --quick-generate-key "$USER_AT" ed25519 cert,sign 0 \
       | awk '/KEY_CREATED/ {print $4; exit}')
+    gpg --batch --pinentry-mode loopback \
+      --passphrase "$PASSPHRASE" --quick-add-key "$GPG_KEY_ID" cv25519 encr 0
     ok "GPG key generated: $GPG_KEY_ID"
   fi
 
@@ -152,7 +154,7 @@ user_mode_install() {
   curl -fsSL https://mise.run | sh
   ok "mise installed to ~/.local/bin/mise"
 
-  # ── 6. Install Homebrew (Linuxbrew) ────────────────────────────────────────
+  # ── 6. Install Homebrew (Linuxbrew) and packages ───────────────────────────
   info "Installing Homebrew…"
   curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | NONINTERACTIVE=1 bash
 
@@ -173,17 +175,17 @@ user_mode_install() {
   fi
 
   info "Stowing dotfiles (skipping local-*, macos-*, windows-*)…"
+  rm ~/.profile # Provider-installed profile conflicts with my own
   STOW_PACKAGES=$(ls "$DOTFILES_DIR" \
     | grep -v -E '^(local-|macos-|windows-).*$' \
     | xargs echo)
-
-  rm ~/.profile
   cd "$DOTFILES_DIR" && stow -R $STOW_PACKAGES
   ok "Dotfiles stowed: $STOW_PACKAGES"
 
   # ── 8. Install tools from mise config ──────────────────────────────────────
   info "Installing tools from mise config…"
   ~/.local/bin/mise install
+  eval "$(~/.local/bin/mise activate bash)"
   ok "mise tools installed."
 
   # ── 9. Install pnpm & configure global settings ────────────────────────────
@@ -215,9 +217,10 @@ user_mode_install() {
   echo "  • pnpm:     ${PNPM_BIN/#$USERHOME/\~}"
   echo ""
   info "Log in as $USERNAME to start using your dev environment."
+  echo ""
   info "Post-install steps:"
-  echo "  • Install LLM API keys: pass insert OPENAI_API_KEY"
-  echo "  • Authorise SSH key on GitHub (Settings → SSH Keys):"
+  printf '  • Install LLM API keys: \033[1;36mpass insert OPENAI_API_KEY\033[0m → Paste key\n'
+  printf '  • Authorise SSH key on GitHub (Settings → SSH Keys):\n'
   cat ~/.ssh/id_ed25519.pub
 }
 
